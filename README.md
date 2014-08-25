@@ -1,4 +1,4 @@
-wheel
+Wheel
 =====
 
-An interactive booth based on wheel of fortune game
+An interactive booth based on the wheel of fortune game
