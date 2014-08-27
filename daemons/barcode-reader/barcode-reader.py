@@ -27,6 +27,7 @@
 import logging
 import sys
 import socket
+import string
 from os import listdir
 from os.path import join
 
@@ -34,7 +35,7 @@ from os.path import join
 from daemon import runner
 from evdev import InputDevice, ecodes, list_devices, categorize
 
-KIOSK = 1
+
 SOCKET_DIR = '/tmp/uzbl'
 
 HEADERS = {
@@ -53,9 +54,17 @@ SCANCODES = {
     50: u'M', 51: u',', 52: u'.', 53: u'/', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
 }
 
+ADMINCODES = {
+    101: 'kids', 102: 'stock', 103: 'stats', 104: 'refresh', 105: 'shutdown'
+}
+
+SCORECODES = {
+    'A': 0, 'B': 25, 'C': 50, 'D': 100, 'E': 200, 'F': 500
+}
+
 # TODO: Change device name
 
-READER_DEVICE = "RFIDeas USB Keyboard"
+READER_DEVICE = "Metrologic Metrologic Scanner"
 
 
 logger = logging.getLogger("Barcode Reader")
@@ -96,6 +105,22 @@ def uzblctrl(input):
     return output
 
 
+def validate_code(code):
+    # The code is in the form '32X242C3'
+    code = code.lower()
+    code_list = list(code)
+    checksum = 0
+    for char in code_list[:-1]:
+        if char.isdigit():
+            checksum += int(char)
+        else:
+            checksum += int(string.lowercase.index(char))
+    if checksum % 10 == int(code_list[-1]):
+        return True
+    else:
+        return False
+
+
 class App():
 
     def __init__(self):
@@ -118,21 +143,43 @@ class App():
 
         logger.info("Starting the Barcode Reader daemon...")
         while True:
-            rfid = ""
+            barcode = ""
             for event in dev.read_loop():
                 if event.type == ecodes.EV_KEY:
                     data = categorize(event)
                     if data.keystate == 1 and data.scancode != 42: # Catch only keydown, and not Enter
                         if data.scancode == 28:
-                            # We have a RFID tag
-                            logger.info("RFID tag read: %s" % rfid)
-                            # TODO: Update URI
-                            url = "https://marmix.ig.he-arc.ch/gelato/w/rfid/%s/%s/" % (KIOSK, rfid)
+                            # We have a Barcode (http://gestion.he-arc.ch/quiz/128374A4/)
+                            # TODO: Change for the GBT4400 output
+                            code = barcode.split('/')[-2][1:]
+                            if validate_code(code):
+                                logger.info("Valid barcode read: %s" % barcode)
+                                # We test the code
+                                if code[-2] == 'Z':
+                                    # This is an admin code
+                                    if int(code[:3]) in ADMINCODES:
+                                        url = "http://localhost/wheel/admin/%s/" % ADMINCODES[int(code[:3])]
+                                    else:
+                                        logger.warning("Barcode not in ADMINCODES: %s" % barcode)
+                                        url = "http://localhost/wheel/error/%s/" % code
+                                elif code[-2] in SCORECODES:
+                                    # We have a score
+                                    url = "http://localhost/wheel/score/%s/" % SCORECODES[code[-2]]
+                                else:
+                                    # The code is invalid, sorry
+                                    logger.warning("Barcode format not recognized: %s" % barcode)
+                                    url = "http://localhost/wheel/error/%s/" % code
+                            else:
+                                # The code is invalid, sorry
+                                logger.info("Not valid barcode read: %s" % barcode)
+                                url = "http://localhost/wheel/error/%s/" % code
+
                             url_string = "uri " + url
+                            logger.info("URI: %s" % url)
                             uzblctrl(url_string)
-                            rfid = ""
+                            barcode = ""
                         else:
-                            rfid += SCANCODES[data.scancode]
+                            barcode += SCANCODES[data.scancode]
 
 
 app = App()
