@@ -6,7 +6,7 @@ This daemon read the barcode from the scanner and send the code to the browser /
 Run as daemon
 -------------
 
-To run as daemon, create a barcode-reader file in the /etc/init.d/ directory with the following code:
+To run as daemon, create a `barcode-reader` file in the /etc/init.d/ directory with the following code:
 
 ```
 #!/bin/sh
