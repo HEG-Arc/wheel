@@ -1,0 +1,26 @@
+{% extends "booth/master-booth.html" %}
+{% load staticfiles %}
+
+{% block content %}
+
+<script type="text/javascript">
+function bumperPress()
+{
+    window.location.href = '{% url "booth-prize" quiz.id %}';
+    return false;
+}
+</script>
+
+<style>
+
+</style>
+
+<div id="background">
+    <img src="{% static 'booth/img/results_background.png' %}" />
+</div>
+
+<div id="score">
+    <p>{{ quiz.score }} points!</p>
+</div>
+
+{% endblock content %}

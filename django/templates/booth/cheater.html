@@ -1,0 +1,35 @@
+{% extends "booth/master-booth.html" %}
+{% load staticfiles %}
+{% block content %}
+
+
+<script type="text/javascript">
+function bumperPress()
+{
+    window.location.href = {% url "booth-adscreen" %};
+    return false;
+}
+</script>
+
+<style>
+
+    #cheater {
+        font-family: OCRABold;
+        position: absolute;
+        top: 350px;
+        left: 474px;
+        width: 575px;
+        font-size: 35px;
+        color: whitesmoke;
+    }
+</style>
+
+<div id="background">
+    <img src="{% static 'booth/img/cheater.png' %}" />
+</div>
+
+<div id="cheater">
+    <p>{{ quiz.prize.label }}!</p>
+</div>
+
+{% endblock content %}

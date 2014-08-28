@@ -1,0 +1,26 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <link rel="stylesheet" href="{{ STATIC_URL }}booth/css/main.css" type="text/css" />
+    <style>
+        body {
+            background-color: #000000;
+        }
+    </style>
+</head>
+<body onKeyPress="if (event.keyCode == 13) bumperPress()">
+{% if messages %}
+<div id="messages">
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% block content %}
+{% endblock content %}
+</body>
+</html>
