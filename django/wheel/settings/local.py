@@ -14,6 +14,9 @@ DEBUG = True
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#template-debug
 TEMPLATE_DEBUG = DEBUG
+
+#DEBUG_TOOLBAR_PATCH_SETTINGS = False
+
 ########## END DEBUG CONFIGURATION
 
 
