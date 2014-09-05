@@ -12,7 +12,21 @@ function bumperPress()
 </script>
 
 <style>
-
+    @font-face {
+        font-family: OCRABold;
+        src: url({% static 'booth/img/OCRABold.ttf' %});
+    }
+    div#score {
+        position: absolute;
+        top: 357px;
+        left: 530px;
+        width: 400px;
+        font-family: OCRABold;
+        font-size: 120px;
+        font-weight: bolder;
+        color: whitesmoke;
+        text-align: right;
+    }
 </style>
 
 <div id="background">
@@ -20,7 +34,7 @@ function bumperPress()
 </div>
 
 <div id="score">
-    <p>{{ quiz.score }}</p>
+    {{ quiz.score }}
 </div>
 
 {% endblock content %}
