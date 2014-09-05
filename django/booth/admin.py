@@ -28,11 +28,15 @@ from django.contrib import admin
 # Third-party app imports
 
 # Appagoo imports
-from .models import Prize
+from .models import Prize, Quiz
 
 
 class PrizeAdmin(admin.ModelAdmin):
     list_display = ('code', 'label', 'percentage', 'stock')
 
 
+class QuizAdmin(admin.ModelAdmin):
+    pass
+
 admin.site.register(Prize, PrizeAdmin)
+admin.site.register(Quiz, QuizAdmin)
