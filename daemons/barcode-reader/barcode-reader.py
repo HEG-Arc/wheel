@@ -36,22 +36,29 @@ from daemon import runner
 from evdev import InputDevice, ecodes, list_devices, categorize
 
 
-SOCKET_DIR = '/tmp/uzbl'
+SOCKET_DIR = '/var/socket/uzbl'
 
 HEADERS = {
     'User-Agent': 'BarcodeReader',
 }
 
-# TODO: Test with the 2D barcode scanner and add missing chars
-
 SCANCODES = {
     # Scancode: ASCIICode
     0: None, 1: u'ESC', 2: u'1', 3: u'2', 4: u'3', 5: u'4', 6: u'5', 7: u'6', 8: u'7', 9: u'8',
-    10: u'9', 11: u'0', 12: u'-', 13: u'=', 14: u'BKSP', 15: u'TAB', 16: u'Q', 17: u'W', 18: u'E', 19: u'R',
-    20: u'T', 21: u'Y', 22: u'U', 23: u'I', 24: u'O', 25: u'P', 26: u'[', 27: u']', 28: u'CRLF', 29: u'LCTRL',
-    30: u'A', 31: u'S', 32: u'D', 33: u'F', 34: u'G', 35: u'H', 36: u'J', 37: u'K', 38: u'L', 39: u';',
-    40: u'"', 41: u'`', 42: u'LSHFT', 43: u'\\', 44: u'Z', 45: u'X', 46: u'C', 47: u'V', 48: u'B', 49: u'N',
-    50: u'M', 51: u',', 52: u'.', 53: u'/', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
+    10: u'9', 11: u'0', 12: u'-', 13: u'=', 14: u'BKSP', 15: u'TAB', 16: u'q', 17: u'w', 18: u'e', 19: u'r',
+    20: u't', 21: u'z', 22: u'u', 23: u'i', 24: u'o', 25: u'p', 26: u'[', 27: u']', 28: u'CRLF', 29: u'LCTRL',
+    30: u'a', 31: u's', 32: u'd', 33: u'f', 34: u'g', 35: u'h', 36: u'j', 37: u'k', 38: u'l', 39: u';',
+    40: u'"', 41: u'`', 42: u'LSHFT', 43: u'\\', 44: u'y', 45: u'x', 46: u'c', 47: u'v', 48: u'b', 49: u'n',
+    50: u'm', 51: u',', 52: u'.', 53: u'-', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
+}
+
+CAPSCODES = {
+    0: None, 1: u'ESC', 2: u'!', 3: u'@', 4: u'#', 5: u'$', 6: u'%', 7: u'^', 8: u'/', 9: u'*',
+    10: u'(', 11: u')', 12: u'_', 13: u'+', 14: u'BKSP', 15: u'TAB', 16: u'Q', 17: u'W', 18: u'E', 19: u'R',
+    20: u'T', 21: u'Y', 22: u'U', 23: u'I', 24: u'O', 25: u'P', 26: u'{', 27: u'}', 28: u'CRLF', 29: u'LCTRL',
+    30: u'A', 31: u'S', 32: u'D', 33: u'F', 34: u'G', 35: u'H', 36: u'J', 37: u'K', 38: u'L', 39: u':',
+    40: u'\'', 41: u'~', 42: u'LSHFT', 43: u'|', 44: u'Z', 45: u'X', 46: u'C', 47: u'V', 48: u'B', 49: u'N',
+    50: u'M', 51: u'<', 52: u':', 53: u'?', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
 }
 
 ADMINCODES = {
@@ -61,8 +68,6 @@ ADMINCODES = {
 SCORECODES = {
     'A': 0, 'B': 25, 'C': 50, 'D': 100, 'E': 200, 'F': 500
 }
-
-# TODO: Change device name
 
 READER_DEVICE = "Datalogic Scanning, Inc. Handheld Barcode Scanner"
 
@@ -108,14 +113,13 @@ def uzblctrl(input):
 def validate_code(code):
     # The code is in the form '32X242C3'
     code = code.lower()
-    code_list = list(code)
     checksum = 0
-    for char in code_list[:-1]:
+    for char in code[:-1]:
         if char.isdigit():
             checksum += int(char)
         else:
             checksum += int(string.lowercase.index(char))
-    if checksum % 10 == int(code_list[-1]):
+    if checksum % 10 == int(code[-1]):
         return True
     else:
         return False
@@ -144,28 +148,31 @@ class App():
         logger.info("Starting the Barcode Reader daemon...")
         while True:
             barcode = ""
+            caps = False
             for event in dev.read_loop():
                 if event.type == ecodes.EV_KEY:
                     data = categorize(event)
-                    if data.keystate == 1 and data.scancode != 42: # Catch only keydown, and not Enter
-                        if data.scancode == 28:
+                    if data.scancode == 42:
+                        # Shift event
+                        if data.keystate == 1:
+                            caps = True
+                        if data.keystate == 0:
+                            caps = False
+                    if data.keystate == 1:  # Down events only
+                        if caps:
+                            key_lookup = u'{}'.format(CAPSCODES.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode)  # Lookup or return UNKNOWN:XX
+                        else:
+                            key_lookup = u'{}'.format(SCANCODES.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode)  # Lookup or return UNKNOWN:XX
+                        if (data.scancode != 42) and (data.scancode != 28):
+                            barcode += key_lookup
+                        if(data.scancode == 28):
+                            # Enter event
+                            logger.info("Scan: %s" % barcode)
                             # We have a Barcode (http://gestion.he-arc.ch/quiz/128374A4/)
-                            # TODO: Change for the GBT4400 output
-                            code = barcode.split('/')[-2][1:]
+                            code = barcode.split('/')[4]
                             if validate_code(code):
-                                logger.info("Valid barcode read: %s" % barcode)
-                                # We test the code
-                                if code[-2] == 'Z':
-                                    # This is an admin code
-                                    if int(code[:3]) in ADMINCODES:
-                                        url = "http://localhost/wheel/admin/%s/" % ADMINCODES[int(code[:3])]
-                                    else:
-                                        logger.warning("Barcode not in ADMINCODES: %s" % barcode)
-                                        url = "http://localhost/wheel/error/%s/" % code
-                                else:
-                                    # The code is invalid, sorry
-                                    logger.info("Barcode: %s" % barcode)
-                                    url = "http://localhost/booth/scan/%s/" % code
+                                logger.info("Valid code: %s" % code)
+                                url = "http://localhost/booth/scan/%s/" % code
                             else:
                                 # The code is invalid, sorry
                                 logger.info("Not valid barcode read: %s" % barcode)
@@ -173,10 +180,11 @@ class App():
 
                             url_string = "uri " + url
                             logger.info("URI: %s" % url)
-                            uzblctrl(url_string)
-                            barcode = ""
-                        else:
-                            barcode += SCANCODES[data.scancode]
+                            try:
+                                uzblctrl(url_string)
+                            except:
+                                pass
+                            barcode = ''
 
 
 app = App()
