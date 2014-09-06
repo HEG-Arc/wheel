@@ -16,7 +16,7 @@
             {
                 if (bumpSeq == "spin")
                 {
-                    startSpin({{ prize.code }});
+                    startSpin({{ prize.index }});
                     document.getElementById("winwheel").play();
                     var xhr = new XMLHttpRequest();
                     xhr.open("GET", "{% url "light-roulette" %}", true);

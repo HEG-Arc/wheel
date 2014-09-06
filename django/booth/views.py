@@ -24,6 +24,7 @@
 import string
 import logging
 import time
+import datetime
 from random import randrange
 import pysimpledmx
 from threading import Thread
@@ -38,6 +39,7 @@ from django.core.urlresolvers import reverse
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
 
 
 # Third-party app imports
@@ -52,7 +54,7 @@ SCORECODES = {
 FREECODES = ['1A1', '2A2', '3A3']
 
 ADMINCODES = {
-    101: 'booth-admin-kids', 102: 'booth-admin-stock', 103: 'booth-admin-stats', 104: 'booth-admin-refresh', 105: 'booth-admin-shutdown'
+    101: 'booth-admin-kids', 102: 'booth-admin-stats', 104: 'booth-admin-refresh', 105: 'booth-admin-shutdown'
 }
 
 COM_PORT = '/dev/ttyUSB0'
@@ -121,9 +123,23 @@ def prize(request, quiz_id):
     random_prize = get_random_prize(past_prize)
     quiz.prize = random_prize
     quiz.save()
+    random_prize.stock -= 1
+    random_prize.save()
     request.session['prize'] = random_prize.id
     return render_to_response('booth/prize.html', {
         'quiz': quiz,
+        'prize': random_prize,
+    }, context_instance=RequestContext(request))
+
+
+def prize_kids(request):
+    past_prize = int(request.session.get('prize', 12))
+    logging.info("Past_prize: %s" % past_prize)
+    random_prize = get_random_prize(past_prize)
+    random_prize.stock -= 1
+    random_prize.save()
+    request.session['prize'] = random_prize.id
+    return render_to_response('booth/prize.html', {
         'prize': random_prize,
     }, context_instance=RequestContext(request))
 
@@ -165,16 +181,33 @@ def get_random_prize(past_prize):
         prize = weighted_prizes_list[randrange(len(weighted_prizes_list))]
         logging.info("Random prize: %s" % prize)
     random_prize = get_object_or_404(Prize, pk=prize)
-    chng_stock_prize = Prize.objects.get(pk=prize)
-    chng_stock_prize.stock -= 1
-    chng_stock_prize.save()
     return random_prize
+
+
+def admin_stats(request):
+    from suremark import printpos
+    htmlstring = u"<em>Capa'cité 2014</em><br>Date: %s<br><br><font face='A'>" % datetime.datetime.now()
+    stock = Prize.objects.all()
+    htmlstring += u"<br><b><u>Stock actuel</u></b><br>"
+    for prize in stock:
+        htmlstring += u"<left>%s<right>%s<br>" % (prize.name, prize.stock)
+    quizz = Quiz.objects.filter(timestamp__gte=datetime.date.today()).values('terminal').annotate(qty=Count('prize')).order_by('terminal')
+    htmlstring += u"<br><b><u>Statistiques de la journée</u></b><br>"
+    for q in quizz:
+        htmlstring += u"<left>Borne %s<right>%s<br>" % (q['terminal'], q['qty'])
+    total = Quiz.objects.all().count()
+    htmlstring += u"<br><b><u>Statistiques du salon</u></b><br>"
+    htmlstring += u"<left>Nombre de participants<right>%s<br>" % total
+    htmlstring += u"<br><cut>"
+    printpos(htmlstring)
+    return HttpResponseRedirect(reverse('booth-adscreen'))
 
 
 def light_ambiant(request):
     t = Thread(target=light_ambiant_thread)
     t.start()
     return HttpResponse("OK: Ambiant", content_type="text/plain")
+
 
 def light_ambiant_thread():
     mydmx = pysimpledmx.DMXConnection(COM_PORT)

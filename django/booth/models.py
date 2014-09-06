@@ -32,13 +32,31 @@ from django.db import models
 
 class Quiz(models.Model):
     code = models.CharField(unique=True, max_length=20)
+    terminal = models.CharField(max_length=1)
     score = models.IntegerField(max_length=5, default=0)
     prize = models.ForeignKey('Prize', null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = 'quiz'
+        verbose_name_plural = 'quiz'
+        ordering = ['-timestamp']
+
+    def __unicode__(self):
+        return self.code
+
 
 class Prize(models.Model):
-    code = models.IntegerField(max_length=2)
-    label = models.CharField(max_length=250)
+    index = models.IntegerField(max_length=2, help_text='The index of the prize on the wheel [0:n-1]')
+    name = models.CharField(max_length=250, help_text='Name used for inventory purpose')
+    label = models.CharField(max_length=250, help_text='This is the name displayed on the screen, with the article')
     percentage = models.IntegerField(max_length=2)
     stock = models.IntegerField(max_length=5)
+
+    class Meta:
+        verbose_name = 'prize'
+        verbose_name_plural = 'prizes'
+        ordering = ['name']
+
+    def __unicode__(self):
+        return self.name

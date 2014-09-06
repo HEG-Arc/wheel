@@ -32,10 +32,11 @@ from .models import Prize, Quiz
 
 
 class PrizeAdmin(admin.ModelAdmin):
-    list_display = ('code', 'label', 'percentage', 'stock')
+    list_display = ('index', 'name', 'percentage', 'stock')
 
 
 class QuizAdmin(admin.ModelAdmin):
+    list_display = ('code', 'score', 'terminal', 'prize', 'timestamp')
     pass
 
 admin.site.register(Prize, PrizeAdmin)
