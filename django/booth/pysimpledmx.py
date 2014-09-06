@@ -1,4 +1,5 @@
-import serial
+from serial import serial_for_url
+import pyftdi.serialext
 import sys
 import time
 
@@ -37,12 +38,12 @@ class DMXConnection(object):
             port_num = COM_PORT
             
         try:
-            self.com = serial.Serial(port_num, baudrate=COM_BAUD, timeout=COM_TIMEOUT)
-        except serial.SerialException:
+            self.com = serial_for_url(port_num, baudrate=COM_BAUD, timeout=COM_TIMEOUT)
+        except:
             print "Could not open COM%s" % (port_num)
             while self.com.isOpen():
                 time.sleep(0.2)
-            self.com = serial.Serial(port_num, baudrate=COM_BAUD, timeout=COM_TIMEOUT)
+            self.com = serial_for_url(port_num, baudrate=COM_BAUD, timeout=COM_TIMEOUT)
             #sys.exit(0)
             
         print "Opened %s" % self.com.portstr

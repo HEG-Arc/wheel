@@ -358,7 +358,7 @@ function doSpin()
 				{
                     document.getElementById("winsound").play();
                     var xhrl = new XMLHttpRequest();
-                    xhrl.open("GET", "http://localhost:8080/win", true);
+                    xhrl.open("GET", "http://localhost/booth/light/win/", true);
                     xhrl.send(null);
                     // change the innerHTML of a div to indicate the prize etc - up to you.
                     document.getElementById("prize").style.display="inline";

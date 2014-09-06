@@ -39,4 +39,6 @@ urlpatterns = patterns('',
     url(r'^wrong/(?P<code>\w+)/$', views.wrong, name='wrong-code'),
     url(r'^light/roulette/$', views.light_roulette, name='light-roulette'),
     url(r'^light/ambiant/$', views.light_ambiant, name='light-ambiant'),
+    url(r'^light/win/$', views.light_win, name='light-win'),
+    url(r'^light/off/$', views.light_off, name='light-off'),
 )

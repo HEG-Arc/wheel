@@ -64,7 +64,7 @@ SCORECODES = {
 
 # TODO: Change device name
 
-READER_DEVICE = "Metrologic Metrologic Scanner"
+READER_DEVICE = "Datalogic Scanning, Inc. Handheld Barcode Scanner"
 
 
 logger = logging.getLogger("Barcode Reader")
@@ -162,17 +162,14 @@ class App():
                                     else:
                                         logger.warning("Barcode not in ADMINCODES: %s" % barcode)
                                         url = "http://localhost/wheel/error/%s/" % code
-                                elif code[-2] in SCORECODES:
-                                    # We have a score
-                                    url = "http://localhost/wheel/score/%s/" % SCORECODES[code[-2]]
                                 else:
                                     # The code is invalid, sorry
-                                    logger.warning("Barcode format not recognized: %s" % barcode)
-                                    url = "http://localhost/wheel/error/%s/" % code
+                                    logger.info("Barcode: %s" % barcode)
+                                    url = "http://localhost/booth/scan/%s/" % code
                             else:
                                 # The code is invalid, sorry
                                 logger.info("Not valid barcode read: %s" % barcode)
-                                url = "http://localhost/wheel/error/%s/" % code
+                                url = "http://localhost/booth/scan/%s/" % code
 
                             url_string = "uri " + url
                             logger.info("URI: %s" % url)
