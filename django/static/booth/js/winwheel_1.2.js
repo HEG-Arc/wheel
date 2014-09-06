@@ -58,7 +58,7 @@ var determinedGetUrl = "";  	 // Set to URL of the server-side process to load v
 // Thinking about a clock face, 0 is at the 12 o'clock, 90 is at the 3 o'clock, 180 is 6 o'clock, 270 is 9 o'clock.
 var prizes = new Array();
 prizes[0] = {"name" : "un bloc-note", "startAngle" : 0,   "endAngle" : 44};  // Note how prize end angle is 1 less than start angle of next prize so no overlap.
-prizes[1] = {"name" : "un porte-clés", "startAngle" : 45,  "endAngle" : 89};
+prizes[1] = {"name" : "un porte-clefs", "startAngle" : 45,  "endAngle" : 89};
 prizes[2] = {"name" : "une sacoche", "startAngle" : 90,  "endAngle" : 134};
 prizes[3] = {"name" : "un linge de bain", "startAngle" : 135, "endAngle" : 179};
 prizes[4] = {"name" : "un parapluie", "startAngle" : 180, "endAngle" : 224};
