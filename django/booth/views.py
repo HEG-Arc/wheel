@@ -59,6 +59,7 @@ ADMINCODES = {
 
 COM_PORT = '/dev/ttyUSB0'
 
+
 def validate_code(code):
     # The code is in the form '32X242C3'
     code = code.lower()
@@ -96,7 +97,7 @@ def scan(request, code):
                     # Display the score
                     return HttpResponseRedirect(reverse('booth-score', args=(quiz.id,)))
             except Quiz.DoesNotExist:
-                quiz = Quiz(code=code, score=SCORECODES[code[-2]])
+                quiz = Quiz(code=code, score=SCORECODES[code[-2]], terminal=code[0])
                 quiz.save()
                 return HttpResponseRedirect(reverse('booth-score', args=(quiz.id,)))
         else:

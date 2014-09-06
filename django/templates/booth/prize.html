@@ -82,7 +82,11 @@
 	</head>
 	<body onKeyPress="if (event.keyCode == 13) bumperPress(bumpSeq)">
         <audio id="winwheel" src="{% static "booth/audio/winwheel.ogg" %}" preload="auto"></audio>
-        <audio id="winsound" src="{% static "booth/audio/win.ogg" %}" preload="auto"></audio>
+        {% if prize.big %}
+            <audio id="winsound" src="{% static "booth/audio/game_finish_jingle_long.ogg" %}" preload="auto"></audio>
+        {% else %}
+            <audio id="winsound" src="{% static "booth/audio/game_finish_jingle_short.ogg" %}" preload="auto"></audio>
+        {% endif %}
 		<div id="background">
             <img src="{% static 'booth/img/wheel-background.gif' %}" />
         </div>

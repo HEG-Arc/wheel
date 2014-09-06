@@ -52,6 +52,7 @@ class Prize(models.Model):
     label = models.CharField(max_length=250, help_text='This is the name displayed on the screen, with the article')
     percentage = models.IntegerField(max_length=2)
     stock = models.IntegerField(max_length=5)
+    big = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'prize'

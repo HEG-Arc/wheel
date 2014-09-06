@@ -32,7 +32,7 @@ from .models import Prize, Quiz
 
 
 class PrizeAdmin(admin.ModelAdmin):
-    list_display = ('index', 'name', 'percentage', 'stock')
+    list_display = ('index', 'name', 'percentage', 'stock', 'big')
 
 
 class QuizAdmin(admin.ModelAdmin):
