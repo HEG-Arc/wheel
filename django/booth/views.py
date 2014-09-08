@@ -187,19 +187,19 @@ def get_random_prize(past_prize):
 
 def admin_stats(request):
     from suremark import printpos
-    htmlstring = u"<em>Capa'cité 2014</em><br>Date: %s<br><br><font face='A'>" % datetime.datetime.now()
+    htmlstring = u"<center><em>Capa'cité 2014</em><br>%s<br><br><font face='A'>" % datetime.datetime.now()
     stock = Prize.objects.all()
-    htmlstring += u"<br><b><u>Stock actuel</u></b><br>"
+    htmlstring += u"<left><br><b><u>Stock actuel</u></b><br>"
     for prize in stock:
         htmlstring += u"<left>%s<right>%s<br>" % (prize.name, prize.stock)
     quizz = Quiz.objects.filter(timestamp__gte=datetime.date.today()).values('terminal').annotate(qty=Count('prize')).order_by('terminal')
-    htmlstring += u"<br><b><u>Statistiques de la journée</u></b><br>"
+    htmlstring += u"<br><left><b><u>Statistiques de la journée</u></b><br>"
     for q in quizz:
         htmlstring += u"<left>Borne %s<right>%s<br>" % (q['terminal'], q['qty'])
     total = Quiz.objects.all().count()
-    htmlstring += u"<br><b><u>Statistiques du salon</u></b><br>"
+    htmlstring += u"<br><left><b><u>Statistiques du salon</u></b><br>"
     htmlstring += u"<left>Nombre de participants<right>%s<br>" % total
-    htmlstring += u"<br><cut>"
+    htmlstring += u"<br><br><br><br><br><cut>"
     printpos(htmlstring)
     return HttpResponseRedirect(reverse('booth-adscreen'))
 

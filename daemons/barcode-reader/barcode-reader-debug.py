@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-#!/usr/bin/python
 # barcode-reader.py
 #
 # Copyright (C) 2014 HES-SO//HEG Arc
@@ -29,7 +28,6 @@ import logging
 import sys
 import socket
 import string
-import subprocess
 from os import listdir
 from os.path import join
 
@@ -43,6 +41,8 @@ SOCKET_DIR = '/var/socket/uzbl'
 HEADERS = {
     'User-Agent': 'BarcodeReader',
 }
+
+# TODO: Test with the 2D barcode scanner and add missing chars
 
 SCANCODES = {
     # Scancode: ASCIICode
@@ -70,6 +70,8 @@ ADMINCODES = {
 SCORECODES = {
     'A': 0, 'B': 25, 'C': 50, 'D': 100, 'E': 200, 'F': 500
 }
+
+# TODO: Change device name
 
 READER_DEVICE = "Datalogic Scanning, Inc. Handheld Barcode Scanner"
 
@@ -114,48 +116,39 @@ def uzblctrl(input):
 
 def validate_code(code):
     # The code is in the form '32X242C3'
+    logger.info("Valid barcode read: %s" % code)
     code = code.lower()
+    code_list = list(code)
     checksum = 0
-    for char in code[:-1]:
+    for char in code_list[:-1]:
         if char.isdigit():
             checksum += int(char)
         else:
             checksum += int(string.lowercase.index(char))
-    if checksum % 10 == int(code[-1]):
+    if checksum % 10 == int(code_list[-1]):
         return True
     else:
         return False
 
 
-class App():
-
-    def __init__(self):
-        self.stdin_path = '/dev/null'
-        self.stdout_path = '/dev/tty'
-        self.stderr_path = '/dev/tty'
-        self.pidfile_path = '/var/run/wheel/barcode-reader.pid'
-        self.pidfile_timeout = 5
-
-    def run(self):
-        devices = map(InputDevice, list_devices())
-        for device in devices:
+devices = map(InputDevice, list_devices())
+for device in devices:
             if device.name == READER_DEVICE:
                 dev = InputDevice(device.fn)
-        try:
+try:
             dev.grab()
-        except:
+except:
             logger.error("Unable to grab InputDevice")
             sys.exit(1)
 
-        logger.info("Starting the Barcode Reader daemon...")
-        while True:
+logger.info("Starting the Barcode Reader daemon...")
+while True:
             barcode = ""
             caps = False
             for event in dev.read_loop():
                 if event.type == ecodes.EV_KEY:
                     data = categorize(event)
                     if data.scancode == 42:
-                        # Shift event
                         if data.keystate == 1:
                             caps = True
                         if data.keystate == 0:
@@ -166,15 +159,25 @@ class App():
                         else:
                             key_lookup = u'{}'.format(SCANCODES.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode)  # Lookup or return UNKNOWN:XX
                         if (data.scancode != 42) and (data.scancode != 28):
-                            barcode += key_lookup
+                            barcode += key_lookup  # Print it all out!
                         if(data.scancode == 28):
-                            # Enter event
-                            logger.info("Scan: %s" % barcode)
+                            print barcode
                             # We have a Barcode (http://gestion.he-arc.ch/quiz/128374A4/)
+                            # We don't take the first char (machine id)
                             code = barcode.split('/')[4]
                             if validate_code(code):
-                                logger.info("Valid code: %s" % code)
-                                url = "http://localhost/booth/scan/%s/" % code
+                                logger.info("Valid barcode read: %s" % barcode)
+                                # We test the code
+                                if code[-2] == 'Z':
+                                    # This is an admin code
+                                    if int(code[:3]) in ADMINCODES:
+                                        url = "http://localhost/wheel/admin/%s/" % ADMINCODES[int(code[:3])]
+                                    else:
+                                        logger.warning("Barcode not in ADMINCODES: %s" % barcode)
+                                        url = "http://localhost/wheel/error/%s/" % code
+                                else:
+                                    logger.info("Barcode: %s" % barcode)
+                                    url = "http://localhost/booth/scan/%s/" % code
                             else:
                                 # The code is invalid, sorry
                                 logger.info("Not valid barcode read: %s" % barcode)
@@ -188,11 +191,3 @@ class App():
                                 pass
                             barcode = ''
 
-
-app = App()
-
-daemon_runner = runner.DaemonRunner(app)
-daemon_runner.daemon_context.files_preserve = [handler.stream]
-daemon_runner.do_action()
-
-logger.info("Terminating the Barcode Reader daemon...")
