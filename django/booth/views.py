@@ -83,27 +83,30 @@ def scan(request, code):
     if validate_code(code):
         logging.info("Valid code received: %s" % code)
         # We test the code
-        if code[-2] == 'Z' and int(code[:3]) in ADMINCODES:
-            logging.debug("Admin code %s - %s" % (code[:3], ADMINCODES[int(code[:3])]))
-            return HttpResponseRedirect(reverse(ADMINCODES[int(code[:3])]))
-        elif code[-2] in SCORECODES:
-            # We check if the code is already in the database
-            try:
-                quiz = Quiz.objects.get(code=code)
-                if quiz.prize:
-                    # This is a cheater ;-)
-                    return HttpResponseRedirect(reverse('booth-cheater', args=(quiz.id,)))
-                else:
-                    # Display the score
+        try:
+            if code[-2] == 'Z' and int(code[:3]) in ADMINCODES:
+                logging.debug("Admin code %s - %s" % (code[:3], ADMINCODES[int(code[:3])]))
+                return HttpResponseRedirect(reverse(ADMINCODES[int(code[:3])]))
+            elif code[-2] in SCORECODES:
+                # We check if the code is already in the database
+                try:
+                    quiz = Quiz.objects.get(code=code)
+                    if quiz.prize:
+                        # This is a cheater ;-)
+                        return HttpResponseRedirect(reverse('booth-cheater', args=(quiz.id,)))
+                    else:
+                        # Display the score
+                        return HttpResponseRedirect(reverse('booth-score', args=(quiz.id,)))
+                except Quiz.DoesNotExist:
+                    quiz = Quiz(code=code, score=SCORECODES[code[-2]], terminal=code[0])
+                    quiz.save()
                     return HttpResponseRedirect(reverse('booth-score', args=(quiz.id,)))
-            except Quiz.DoesNotExist:
-                quiz = Quiz(code=code, score=SCORECODES[code[-2]], terminal=code[0])
-                quiz.save()
-                return HttpResponseRedirect(reverse('booth-score', args=(quiz.id,)))
-        else:
-            # The code is invalid, sorry
-            logging.warning("Code format not recognized: %s" % code)
-            return HttpResponseRedirect(reverse('wrong-code', args=(code,)))
+            else:
+                # The code is invalid, sorry
+                logging.warning("Code format not recognized: %s" % code)
+                return HttpResponseRedirect(reverse('wrong-code', args=(code,)))
+        except IndexError:
+            return HttpResponseRedirect(reverse('wrong-code', args=('WRONG',)))
     else:
         logging.warning("Code is not valid: %s" % code)
         return HttpResponseRedirect(reverse('wrong-code', args=(code,)))

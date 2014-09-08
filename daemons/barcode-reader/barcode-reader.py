@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-#!/usr/bin/python
 # barcode-reader.py
 #
 # Copyright (C) 2014 HES-SO//HEG Arc
@@ -26,12 +25,9 @@
 
 #standard python libs
 import logging
-import sys
-import socket
+import time
 import string
-import subprocess
-from os import listdir
-from os.path import join
+from subprocess import call
 
 #third party libs
 from daemon import runner
@@ -57,22 +53,19 @@ SCANCODES = {
 CAPSCODES = {
     0: None, 1: u'ESC', 2: u'!', 3: u'@', 4: u'#', 5: u'$', 6: u'%', 7: u'^', 8: u'/', 9: u'*',
     10: u'(', 11: u')', 12: u'_', 13: u'+', 14: u'BKSP', 15: u'TAB', 16: u'Q', 17: u'W', 18: u'E', 19: u'R',
-    20: u'T', 21: u'Y', 22: u'U', 23: u'I', 24: u'O', 25: u'P', 26: u'{', 27: u'}', 28: u'CRLF', 29: u'LCTRL',
+    20: u'T', 21: u'Z', 22: u'U', 23: u'I', 24: u'O', 25: u'P', 26: u'{', 27: u'}', 28: u'CRLF', 29: u'LCTRL',
     30: u'A', 31: u'S', 32: u'D', 33: u'F', 34: u'G', 35: u'H', 36: u'J', 37: u'K', 38: u'L', 39: u':',
-    40: u'\'', 41: u'~', 42: u'LSHFT', 43: u'|', 44: u'Z', 45: u'X', 46: u'C', 47: u'V', 48: u'B', 49: u'N',
+    40: u'\'', 41: u'~', 42: u'LSHFT', 43: u'|', 44: u'Y', 45: u'X', 46: u'C', 47: u'V', 48: u'B', 49: u'N',
     50: u'M', 51: u'<', 52: u':', 53: u'?', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
 }
 
 ADMINCODES = {
-    101: 'kids', 102: 'stock', 103: 'stats', 104: 'refresh', 105: 'shutdown'
+    104: 'refresh', 105: 'shutdown'
 }
 
-SCORECODES = {
-    'A': 0, 'B': 25, 'C': 50, 'D': 100, 'E': 200, 'F': 500
-}
 
 READER_DEVICE = "Datalogic Scanning, Inc. Handheld Barcode Scanner"
-
+#READER_DEVICE = "Metrologic Metrologic Scanner"
 
 logger = logging.getLogger("Barcode Reader")
 logger.setLevel(logging.INFO)
@@ -82,34 +75,11 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def get_socket_file():
-    socket_file = listdir(SOCKET_DIR)[0]
-    return join(SOCKET_DIR, socket_file)
-
-
-def uzblctrl(input):
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.connect(get_socket_file())
-    sock.settimeout(0.5)
-
-    sock.send(input+'\n')
-
-    output = ''
-    try:
-        while True:
-            buflen = 1024*1024  # 1M
-            buf = sock.recv(buflen)
-            output += buf
-            # Don't wait to timeout if we get short output
-            if len(buf) != buflen:
-                break
-    except socket.timeout:
-        pass
-    sock.close()
-
-    if len(output) > 0 and output[-1]:
-        output = output[:-1]
-    return output
+def chromix(url):
+    response = call("chromix with current goto %s" % url, shell=True)
+    if response == 0:
+        return True
+    return False
 
 
 def validate_code(code):
@@ -127,8 +97,16 @@ def validate_code(code):
         return False
 
 
-class App():
+def get_device():
+    dev = None
+    devices = map(InputDevice, list_devices())
+    for device in devices:
+        if device.name == READER_DEVICE:
+            dev = InputDevice(device.fn)
+    return dev
 
+
+class App():
     def __init__(self):
         self.stdin_path = '/dev/null'
         self.stdout_path = '/dev/tty'
@@ -137,56 +115,57 @@ class App():
         self.pidfile_timeout = 5
 
     def run(self):
-        devices = map(InputDevice, list_devices())
-        for device in devices:
-            if device.name == READER_DEVICE:
-                dev = InputDevice(device.fn)
-        try:
-            dev.grab()
-        except:
-            logger.error("Unable to grab InputDevice")
-            sys.exit(1)
-
-        logger.info("Starting the Barcode Reader daemon...")
         while True:
-            barcode = ""
-            caps = False
-            for event in dev.read_loop():
-                if event.type == ecodes.EV_KEY:
-                    data = categorize(event)
-                    if data.scancode == 42:
-                        # Shift event
-                        if data.keystate == 1:
-                            caps = True
-                        if data.keystate == 0:
-                            caps = False
-                    if data.keystate == 1:  # Down events only
-                        if caps:
-                            key_lookup = u'{}'.format(CAPSCODES.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode)  # Lookup or return UNKNOWN:XX
-                        else:
-                            key_lookup = u'{}'.format(SCANCODES.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode)  # Lookup or return UNKNOWN:XX
-                        if (data.scancode != 42) and (data.scancode != 28):
-                            barcode += key_lookup
-                        if(data.scancode == 28):
-                            # Enter event
-                            logger.info("Scan: %s" % barcode)
-                            # We have a Barcode (http://gestion.he-arc.ch/quiz/128374A4/)
-                            code = barcode.split('/')[4]
-                            if validate_code(code):
-                                logger.info("Valid code: %s" % code)
-                                url = "http://localhost/booth/scan/%s/" % code
-                            else:
-                                # The code is invalid, sorry
-                                logger.info("Not valid barcode read: %s" % barcode)
-                                url = "http://localhost/booth/scan/%s/" % code
+            logger.info("Getting the device...")
+            dev = get_device()
 
-                            url_string = "uri " + url
-                            logger.info("URI: %s" % url)
-                            try:
-                                uzblctrl(url_string)
-                            except:
-                                pass
-                            barcode = ''
+            if dev:
+                logger.info("We got the device...")
+                dev.grab()
+                logger.info("Starting the Barcode Reader daemon...")
+                while True:
+                    barcode = ""
+                    caps = False
+                    try:
+                        for event in dev.read_loop():
+                            if event.type == ecodes.EV_KEY:
+                                data = categorize(event)
+                                if data.scancode == 42:
+                                    # Shift event
+                                    if data.keystate == 1:
+                                        caps = True
+                                    if data.keystate == 0:
+                                        caps = False
+                                if data.keystate == 1:  # Down events only
+                                    if caps:
+                                        key_lookup = u'{}'.format(CAPSCODES.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode)  # Lookup or return UNKNOWN:XX
+                                    else:
+                                        key_lookup = u'{}'.format(SCANCODES.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode)  # Lookup or return UNKNOWN:XX
+                                    if (data.scancode != 42) and (data.scancode != 28):
+                                        barcode += key_lookup
+                                    if(data.scancode == 28):
+                                        # Enter event
+                                        logger.info("Scan: %s" % barcode)
+                                        # We have a Barcode (http://gestion.he-arc.ch/quiz/128374A4/)
+                                        try:
+                                            code = barcode.split('/')[4]
+                                        except IndexError:
+                                            code = "0"
+                                        if validate_code(code):
+                                            logger.info("Valid code: %s" % code)
+                                            url = "http://localhost/booth/scan/%s/" % code
+                                        else:
+                                            # The code is invalid, sorry
+                                            logger.info("Not valid barcode read: %s" % barcode)
+                                            url = "http://localhost/booth/scan/%s/" % code
+
+                                        logger.info("URL: %s" % url)
+                                        chromix(url)
+                                        barcode = ''
+                    except IOError:
+                        logger.error("IOError")
+                        break
+            time.sleep(2)
 
 
 app = App()
