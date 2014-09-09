@@ -40,12 +40,14 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
+from django.conf import settings
 
 
 # Third-party app imports
 
 # Wheel imports
 from .models import Prize, Quiz
+
 
 SCORECODES = {
     'A': 0, 'B': 25, 'C': 50, 'D': 100, 'E': 200, 'F': 500
@@ -76,6 +78,7 @@ def validate_code(code):
 
 def adscreen(request):
     return render_to_response('booth/adscreen.html', {
+        'volume': str(settings.WHEEL_VOLUME),
     }, context_instance=RequestContext(request))
 
 

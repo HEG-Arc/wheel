@@ -306,3 +306,7 @@ LOGGING = {
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
 WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 ########## END WSGI CONFIGURATION
+
+WHEEL_VOLUME = 0.5
+
+WHEEL_URL = "http://www.heg-arc.ch"
