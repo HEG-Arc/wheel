@@ -151,7 +151,11 @@ class App():
                                             code = barcode.split('/')[3]
                                         except IndexError:
                                             code = "0"
-                                        if validate_code(code):
+                                        try:
+                                            validation = validate_code(code)
+                                        except:
+                                            validation = False
+                                        if validation:
                                             logger.info("Valid code: %s" % code)
                                             url = "http://localhost/booth/scan/%s/" % code
                                         else:
