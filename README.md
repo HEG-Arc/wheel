@@ -30,4 +30,16 @@ respawn
 exec /usr/bin/chromix-server
 ```
 
-That's it, enjoy!
+Mouse pointer
+-------------
+
+Fast and dirty trick to remove the mouse pointer from the screen (http://www.linuxquestions.org/questions/linux-general-1/manually-setting-x-cursor-or-theme-doesn%27t-work-no-errors-700965/#post3432670)
+
+Download: http://downloads.yoctoproject.org/releases/matchbox/utils/xcursor-transparent-theme-0.1.1.tar.gz
+
+```
+./configure
+cd cursors
+make install-data-local DESTDIR=/home/wheel/.icons/default CURSOR_DIR=/cursors
+chown -R wheel:wheel /home/wheel/.icons
+```
