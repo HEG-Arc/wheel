@@ -54,7 +54,7 @@ SCORECODES = {
 FREECODES = ['1A1', '2A2', '3A3']
 
 ADMINCODES = {
-    101: 'booth-admin-kids', 102: 'booth-admin-stats', 104: 'booth-admin-refresh', 105: 'booth-admin-shutdown'
+    101: 'booth-admin-kids', 102: 'booth-admin-stats', 104: 'booth-admin-refresh', 105: 'booth-admin-light-off', 106: 'booth-admin-shutdown'
 }
 
 COM_PORT = '/dev/ttyUSB0'
@@ -211,6 +211,18 @@ def admin_refresh(request):
     return HttpResponseRedirect(reverse('booth-adscreen'))
 
 
+def admin_shutdown(request):
+    t = Thread(target=admin_shutdown_thread)
+    t.start()
+    return render_to_response('booth/shutdown.html', {
+    }, context_instance=RequestContext(request))
+
+
+def admin_shutdown_thread():
+    from subprocess import call
+    call("sudo shutdown -h now", shell=True)
+
+
 def light_ambiant(request):
     t = Thread(target=light_ambiant_thread)
     t.start()
@@ -339,7 +351,7 @@ def light_win_thread():
 def light_off(request):
     t = Thread(target=light_off_thread)
     t.start()
-    return HttpResponse("OK: OFF", content_type="text/plain")
+    return HttpResponseRedirect(reverse('booth-adscreen'))
 
 
 def light_off_thread():

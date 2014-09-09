@@ -44,4 +44,6 @@ urlpatterns = patterns('',
     url(r'^admin/stats/$', views.admin_stats, name='booth-admin-stats'),
     url(r'^admin/kids/$', views.prize_kids, name='booth-admin-kids'),
     url(r'^admin/refresh/$', views.admin_refresh, name='booth-admin-refresh'),
+    url(r'^admin/light-off/$', views.light_off, name='booth-admin-light-off'),
+    url(r'^admin/shutdown/$', views.admin_shutdown, name='booth-admin-shutdown'),
 )

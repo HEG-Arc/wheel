@@ -1,0 +1,32 @@
+{% extends "booth/master-booth.html" %}
+{% load staticfiles %}
+
+{% block content %}
+
+<style>
+    @font-face {
+        font-family: OCRABold;
+        src: url({% static 'booth/img/OCRABold.ttf' %});
+    }
+    div#score {
+        position: absolute;
+        top: 257px;
+        left: 500px;
+        width: 400px;
+        font-family: OCRABold;
+        font-size: 80px;
+        font-weight: bolder;
+        color: whitesmoke;
+        text-align: right;
+    }
+</style>
+
+<div id="background">
+    <img src="{% static 'booth/img/message.png' %}" />
+</div>
+
+<div id="score">
+    Shutting down...
+</div>
+
+{% endblock content %}
