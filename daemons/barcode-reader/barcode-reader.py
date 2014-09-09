@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: UTF-8 -*-
 # barcode-reader.py
 #
@@ -106,16 +107,16 @@ def get_device():
     return dev
 
 
-class App():
-    def __init__(self):
-        self.stdin_path = '/dev/null'
-        self.stdout_path = '/dev/tty'
-        self.stderr_path = '/dev/tty'
-        self.pidfile_path = '/var/run/wheel/barcode-reader.pid'
-        self.pidfile_timeout = 5
-
-    def run(self):
-        while True:
+#class App():
+#    def __init__(self):
+#        self.stdin_path = '/dev/null'
+#        self.stdout_path = '/dev/null'
+#        self.stderr_path = '/dev/null'
+#        self.pidfile_path = '/var/run/wheel/barcode-reader.pid'
+#        self.pidfile_timeout = 5
+#
+#    def run(self):
+while True:
             logger.info("Getting the device...")
             dev = get_device()
 
@@ -172,10 +173,10 @@ class App():
             time.sleep(2)
 
 
-app = App()
+#app = App()
 
-daemon_runner = runner.DaemonRunner(app)
-daemon_runner.daemon_context.files_preserve = [handler.stream]
-daemon_runner.do_action()
+#daemon_runner = runner.DaemonRunner(app)
+#daemon_runner.daemon_context.files_preserve = [handler.stream]
+#daemon_runner.do_action()
 
 logger.info("Terminating the Barcode Reader daemon...")
