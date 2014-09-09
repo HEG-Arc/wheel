@@ -148,7 +148,7 @@ class App():
                                         logger.info("Scan: %s" % barcode)
                                         # We have a Barcode (http://gestion.he-arc.ch/quiz/128374A4/)
                                         try:
-                                            code = barcode.split('/')[4]
+                                            code = barcode.split('/')[3]
                                         except IndexError:
                                             code = "0"
                                         if validate_code(code):
