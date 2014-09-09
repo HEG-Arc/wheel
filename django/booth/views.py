@@ -207,6 +207,10 @@ def admin_stats(request):
     return HttpResponseRedirect(reverse('booth-adscreen'))
 
 
+def admin_refresh(request):
+    return HttpResponseRedirect(reverse('booth-adscreen'))
+
+
 def light_ambiant(request):
     t = Thread(target=light_ambiant_thread)
     t.start()
