@@ -223,7 +223,7 @@ def admin_shutdown(request):
 
 def admin_shutdown_thread():
     from subprocess import call
-    call("sudo shutdown -h now", shell=True)
+    call("sudo halt -f", shell=True)
 
 
 def light_ambiant(request):
