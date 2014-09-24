@@ -43,3 +43,16 @@ cd cursors
 make install-data-local DESTDIR=/home/wheel/.icons/default CURSOR_DIR=/cursors
 chown -R wheel:wheel /home/wheel/.icons
 ```
+
+Problem with the bumper
+-----------------------
+
+It seems that the Chromium window doesn't get the focus and is not responding to the <ENTER> key from the bumper. Use ``xdotool`` to send the <F5> key to Chromium.
+
+```xdotool key --windowid "$(xdotool --search --class Chrome | head -n 1)" F5```
+
+Also working:
+
+```xdotool key F5```
+
+Put it in the startup script (add ``sleep 30`` to wait until Chromium started)
