@@ -184,9 +184,9 @@ def get_random_prize(past_prize):
                 weighted_prizes_list.append(p)
     # We randomly choose one prize in the list
     prize = past_prize
-    while prize == past_prize:
-        prize = weighted_prizes_list[randrange(len(weighted_prizes_list))]
-        logging.info("Random prize: %s" % prize)
+    # while prize == past_prize:
+    prize = weighted_prizes_list[randrange(len(weighted_prizes_list))]
+    logging.info("Random prize: %s" % prize)
     random_prize = get_object_or_404(Prize, pk=prize)
     return random_prize
 
